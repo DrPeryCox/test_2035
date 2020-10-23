@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash
 import jwt
 import datetime
 from functools import wraps
+from flask import Flask, request, jsonify, make_response
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/country_info'
@@ -15,7 +16,8 @@ db = SQLAlchemy(app)
 class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
-    cities = db.relationship('City', backref='region', cascade="all, delete", order_by='City.name', lazy='joined')
+    cities = db.relationship('City', backref='region', cascade="all, delete",
+                             order_by='City.name', lazy='joined')
 
     def __repr__(self):
         return f'{self.name}'
@@ -37,11 +39,6 @@ class Users(db.Model):
 
     def __repr__(self):
         return f'{self.name}'
-
-
-@app.route('/hello')
-def hello():
-    return 'Hello, World!'
 
 
 def token_required(f):
@@ -70,11 +67,13 @@ def token_required(f):
 def login():
     auth = request.authorization
     if not auth or not auth.username or not auth.password:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+        return make_response('Could not verify', 401,
+                             {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     user = Users.query.filter_by(name=auth.username).first()
     if not user:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+        return make_response('Could not verify', 401, 
+                             {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode(
@@ -87,7 +86,8 @@ def login():
 
         return jsonify({'token': token.decode('UTF-8')})
 
-    return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+    return make_response('Could not verify', 401, 
+                         {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
 @app.route('/region', methods=['GET'])
